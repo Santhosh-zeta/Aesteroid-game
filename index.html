@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AIC Asteroid Shooter</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: #0a0e1a;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            font-family: 'Segoe UI', sans-serif;
+            color: white;
+        }
+        #game-container {
+            text-align: center;
+        }
+        h1 {
+            color: #00ffff;
+            font-size: 3rem;
+            margin-bottom: 20px;
+            text-shadow: 0 0 20px rgba(0, 255, 255, 0.5);
+        }
+        canvas {
+            border: 2px solid #00ffff;
+            box-shadow: 0 0 30px rgba(0, 255, 255, 0.3);
+            max-width: 100%;
+            height: auto;
+        }
+        #loading {
+            font-size: 1.5rem;
+            color: #8a43e6;
+        }
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        <h1>🚀 AIC ASTEROID SHOOTER</h1>
+        <div id="loading">Loading game...</div>
+        <canvas id="canvas"></canvas>
+    </div>
+    <script src="main.js"></script>
+</body>
+</html>
