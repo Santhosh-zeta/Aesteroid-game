@@ -9,15 +9,15 @@ class Player:
         self.radius = 20
         self.angle = 0
         self.speed = pygame.Vector2(0, 0)
-        self.max_speed = 5
-        self.acceleration = 0.2
-        self.friction = 0.98
+        self.max_speed = 6  # Increased from 5
+        self.acceleration = 0.25  # Increased from 0.2
+        self.friction = 0.97  # Slightly less friction
         self.rotating_left = False
         self.rotating_right = False
         self.thrusting = False
         self.shooting = False
         self.shoot_cooldown = 0
-        self.shoot_cooldown_max = 15
+        self.shoot_cooldown_max = 12  # Faster shooting (was 15)
         self.respawn_pos = pygame.Vector2(x, y)
         self.rect = pygame.Rect(0, 0, self.radius * 2, self.radius * 2)
         self.update_rect()
@@ -30,9 +30,9 @@ class Player:
 
     def update(self):
         if self.rotating_left:
-            self.angle += 4
+            self.angle += 5  # Faster rotation (was 4)
         if self.rotating_right:
-            self.angle -= 4
+            self.angle -= 5
         self.angle %= 360
 
         if self.thrusting:
@@ -93,7 +93,7 @@ class Player:
     def shoot(self):
         if self.shoot_cooldown == 0:
             rad = math.radians(self.angle)
-            bullet_vel = pygame.Vector2(math.cos(rad), -math.sin(rad)) * 10
+            bullet_vel = pygame.Vector2(math.cos(rad), -math.sin(rad)) * 12  # Faster bullets (was 10)
             bullet_pos = self.pos + bullet_vel.normalize() * (self.radius + 10)
             self.shoot_cooldown = self.shoot_cooldown_max
             if self.sound_manager:
