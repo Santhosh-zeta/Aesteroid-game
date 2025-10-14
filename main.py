@@ -13,8 +13,14 @@ from sounds import SoundManager
 pygame.mixer.pre_init(44100, -16, 2, 512)
 pygame.init()
 
-infoObject = pygame.display.Info()
-SCREEN_WIDTH, SCREEN_HEIGHT = infoObject.current_w, infoObject.current_h
+# Fixed resolution for web
+SCREEN_WIDTH = 1280
+SCREEN_HEIGHT = 720
+
+# ...
+
+
+
 
 FPS = 60
 
@@ -35,7 +41,7 @@ COLOR_PANEL_BG = (25, 30, 45, 220)
 
 class Game:
     def __init__(self):
-        self.screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT), pygame.FULLSCREEN)
+        self.screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
         pygame.display.set_caption("AIC Asteroid Shooter")
         self.clock = pygame.time.Clock()
         
