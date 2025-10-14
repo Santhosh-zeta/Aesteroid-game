@@ -2,6 +2,7 @@ import pygame
 import sys
 import math
 import random
+import asyncio  # Required for Pygbag
 from player import Player
 from bullet import Bullet
 from asteroid import AsteroidManager
@@ -16,11 +17,6 @@ pygame.init()
 # Fixed resolution for web
 SCREEN_WIDTH = 1280
 SCREEN_HEIGHT = 720
-
-# ...
-
-
-
 
 FPS = 60
 
@@ -41,6 +37,7 @@ COLOR_PANEL_BG = (25, 30, 45, 220)
 
 class Game:
     def __init__(self):
+        # Changed: Remove FULLSCREEN flag
         self.screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
         pygame.display.set_caption("AIC Asteroid Shooter")
         self.clock = pygame.time.Clock()
@@ -93,32 +90,29 @@ class Game:
         return stars
 
     def draw_starfield(self):
-        """Draw animated starfield background - FIXED"""
+        """Draw animated starfield background"""
         self.screen.fill(COLOR_BG_DARK)
         
         for star in self.stars:
             star['x'] = (star['x'] - star['speed']) % SCREEN_WIDTH
             alpha = star['brightness'] + int(30 * math.sin(self.animation_timer * 0.03 + star['x']))
             alpha = max(80, min(255, alpha))
-            color = (alpha, alpha, alpha)  # Fixed: simple RGB tuple
+            color = (alpha, alpha, alpha)
             pygame.draw.circle(self.screen, color, (int(star['x']), int(star['y'])), star['size'])
 
     def draw_glass_panel(self, x, y, width, height, alpha=220):
         """Draw modern glassmorphism panel"""
         panel = pygame.Surface((width, height), pygame.SRCALPHA)
         
-        # Background with gradient
         for i in range(height):
             gradient_factor = i / height
             bg_alpha = int(alpha * (0.8 + 0.2 * gradient_factor))
             color = (*COLOR_PANEL_BG[:3], bg_alpha)
             pygame.draw.line(panel, color, (0, i), (width, i))
         
-        # Border glow
         border_color = (*COLOR_ACCENT_PRIMARY, 180)
         pygame.draw.rect(panel, border_color, (0, 0, width, height), 2, border_radius=12)
         
-        # Inner highlight
         highlight = (*COLOR_TEXT_PRIMARY, 40)
         pygame.draw.line(panel, highlight, (12, 3), (width - 12, 3), 1)
         
@@ -126,12 +120,10 @@ class Game:
 
     def draw_text_with_shadow(self, text, x, y, font, color, center=True, shadow_offset=2):
         """Draw text with drop shadow"""
-        # Shadow
         shadow = font.render(text, True, (0, 0, 0, 180))
         shadow_rect = shadow.get_rect(center=(x + shadow_offset, y + shadow_offset)) if center else shadow.get_rect(topleft=(x + shadow_offset, y + shadow_offset))
         self.screen.blit(shadow, shadow_rect)
         
-        # Main text
         text_surf = font.render(text, True, color)
         text_rect = text_surf.get_rect(center=(x, y)) if center else text_surf.get_rect(topleft=(x, y))
         self.screen.blit(text_surf, text_rect)
@@ -139,12 +131,10 @@ class Game:
 
     def draw_progress_bar(self, x, y, width, height, progress, color_start, color_end):
         """Draw modern progress bar with gradient"""
-        # Background
         bg = pygame.Surface((width, height), pygame.SRCALPHA)
         bg.fill((30, 35, 50, 200))
         self.screen.blit(bg, (x, y))
         
-        # Fill
         fill_width = int(width * progress)
         if fill_width > 0:
             fill = pygame.Surface((fill_width, height), pygame.SRCALPHA)
@@ -156,7 +146,6 @@ class Game:
                 pygame.draw.line(fill, (r, g, b), (i, 0), (i, height))
             self.screen.blit(fill, (x, y))
         
-        # Border
         pygame.draw.rect(self.screen, COLOR_ACCENT_PRIMARY, (x, y, width, height), 2, border_radius=6)
 
     def draw_particles(self):
@@ -191,26 +180,21 @@ class Game:
         self.draw_starfield()
         self.animation_timer += 1
         
-        # Title area with accent
         title_y = SCREEN_HEIGHT // 5
         
-        # Animated accent line
         line_width = 600 + int(50 * math.sin(self.animation_timer * 0.05))
         pygame.draw.line(self.screen, COLOR_ACCENT_SECONDARY, 
                         (SCREEN_WIDTH//2 - line_width//2, title_y - 30),
                         (SCREEN_WIDTH//2 + line_width//2, title_y - 30), 3)
         
-        # Main title
         self.draw_text_with_shadow("ASTEROID SHOOTER", SCREEN_WIDTH//2, title_y, 
                                    self.font_title, COLOR_ACCENT_PRIMARY, shadow_offset=4)
         
-        # Subtitle
         pulse = 0.7 + 0.3 * math.sin(self.animation_timer * 0.08)
         subtitle_color = tuple(int(c * pulse) for c in COLOR_ACCENT_SECONDARY)
-        self.draw_text_with_shadow("AIC Club Expo", SCREEN_WIDTH//2, title_y + 100, 
+        self.draw_text_with_shadow("AIC Recruitment Challenge", SCREEN_WIDTH//2, title_y + 100, 
                                    self.font_xl, subtitle_color, shadow_offset=2)
         
-        # Input panel
         panel_width = 700
         panel_height = 200
         panel_x = SCREEN_WIDTH//2 - panel_width//2
@@ -218,17 +202,14 @@ class Game:
         
         self.draw_glass_panel(panel_x, panel_y, panel_width, panel_height)
         
-        # Input label
         self.draw_text_with_shadow("ENTER YOUR NAME", SCREEN_WIDTH//2, panel_y + 50, 
                                    self.font_lg, COLOR_TEXT_PRIMARY)
         
-        # Input field
         input_width = 600
         input_height = 60
         input_x = SCREEN_WIDTH//2 - input_width//2
         input_y = panel_y + 110
         
-        # Input box with glow
         glow_alpha = int(80 + 40 * math.sin(self.animation_timer * 0.1))
         glow_surf = pygame.Surface((input_width + 10, input_height + 10), pygame.SRCALPHA)
         pygame.draw.rect(glow_surf, (*COLOR_ACCENT_PRIMARY, glow_alpha), (0, 0, input_width + 10, input_height + 10), border_radius=8)
@@ -237,7 +218,6 @@ class Game:
         pygame.draw.rect(self.screen, (35, 40, 55), (input_x, input_y, input_width, input_height), border_radius=8)
         pygame.draw.rect(self.screen, COLOR_ACCENT_PRIMARY, (input_x, input_y, input_width, input_height), 2, border_radius=8)
         
-        # Input text
         self.cursor_blink += 1
         cursor = "│" if (self.cursor_blink // 25) % 2 == 0 else ""
         display_text = self.player_name + cursor if self.player_name else "Type here..." + cursor
@@ -247,7 +227,6 @@ class Game:
         input_rect = input_surf.get_rect(center=(SCREEN_WIDTH//2, input_y + input_height//2))
         self.screen.blit(input_surf, input_rect)
         
-        # Controls info
         controls_y = SCREEN_HEIGHT - 200
         control_panel_width = 1000
         self.draw_glass_panel(SCREEN_WIDTH//2 - control_panel_width//2, controls_y, control_panel_width, 150, alpha=180)
@@ -263,17 +242,14 @@ class Game:
         for i, (key, desc) in enumerate(controls):
             x = SCREEN_WIDTH//2 - control_panel_width//2 + spacing//2 + i * spacing
             
-            # Key display
             key_surf = self.font_lg.render(key, True, COLOR_ACCENT_PRIMARY)
             key_rect = key_surf.get_rect(center=(x, controls_y + 50))
             self.screen.blit(key_surf, key_rect)
             
-            # Description
             desc_surf = self.font_sm.render(desc, True, COLOR_TEXT_SECONDARY)
             desc_rect = desc_surf.get_rect(center=(x, controls_y + 100))
             self.screen.blit(desc_surf, desc_rect)
         
-        # Start prompt
         prompt_alpha = int(200 + 55 * math.sin(self.animation_timer * 0.15))
         prompt_color = (*COLOR_SUCCESS, prompt_alpha)
         self.draw_text_with_shadow("PRESS ENTER TO START", SCREEN_WIDTH//2, SCREEN_HEIGHT - 80, 
@@ -287,13 +263,11 @@ class Game:
         self.draw_starfield()
         self.animation_timer += 1
         
-        # Red overlay pulse
         overlay = pygame.Surface((SCREEN_WIDTH, SCREEN_HEIGHT), pygame.SRCALPHA)
         pulse_alpha = int(30 * abs(math.sin(self.animation_timer * 0.06)))
         overlay.fill((255, 0, 0, pulse_alpha))
         self.screen.blit(overlay, (0, 0))
         
-        # Main panel
         panel_width = 900
         panel_height = 550
         panel_x = SCREEN_WIDTH//2 - panel_width//2
@@ -301,36 +275,29 @@ class Game:
         
         self.draw_glass_panel(panel_x, panel_y, panel_width, panel_height)
         
-        # Game Over title
         self.draw_text_with_shadow("GAME OVER", SCREEN_WIDTH//2, panel_y + 80, 
                                    self.font_xxl, COLOR_DANGER, shadow_offset=4)
         
-        # Stats section
         stats_y = panel_y + 200
         
-        # Player
         self.draw_text_with_shadow("PLAYER", SCREEN_WIDTH//2, stats_y, 
                                    self.font_sm, COLOR_TEXT_SECONDARY)
         self.draw_text_with_shadow(self.current_player.upper(), SCREEN_WIDTH//2, stats_y + 40, 
                                    self.font_xl, COLOR_ACCENT_PRIMARY, shadow_offset=3)
         
-        # Score
         self.draw_text_with_shadow("FINAL SCORE", SCREEN_WIDTH//2, stats_y + 120, 
                                    self.font_sm, COLOR_TEXT_SECONDARY)
         self.draw_text_with_shadow(str(self.score), SCREEN_WIDTH//2, stats_y + 170, 
                                    self.font_xxl, COLOR_GOLD, shadow_offset=3)
         
-        # Rank
         rank = self.leaderboard.get_player_rank(self.current_player, self.score)
         self.draw_text_with_shadow(f"WORLD RANK: #{rank}", SCREEN_WIDTH//2, stats_y + 260, 
                                    self.font_lg, COLOR_SUCCESS)
         
-        # Continue prompt
         prompt_pulse = 200 + int(55 * math.sin(self.animation_timer * 0.12))
         self.draw_text_with_shadow("PRESS ENTER TO CONTINUE", SCREEN_WIDTH//2, panel_y + panel_height - 50, 
                                    self.font_lg, (*COLOR_ACCENT_PRIMARY, prompt_pulse))
         
-        # Side leaderboard
         self.draw_mini_leaderboard(SCREEN_WIDTH - 370, 50)
         
         self.draw_particles()
@@ -341,11 +308,9 @@ class Game:
         self.draw_starfield()
         self.animation_timer += 1
         
-        # Title
         self.draw_text_with_shadow("🏆 HALL OF FAME", SCREEN_WIDTH//2, 100, 
                                    self.font_xxl, COLOR_GOLD, shadow_offset=4)
         
-        # Main panel
         panel_width = 1100
         panel_height = SCREEN_HEIGHT - 400
         panel_x = SCREEN_WIDTH//2 - panel_width//2
@@ -353,7 +318,6 @@ class Game:
         
         self.draw_glass_panel(panel_x, panel_y, panel_width, panel_height)
         
-        # Headers
         header_y = panel_y + 40
         headers = [
             ("RANK", panel_x + 80),
@@ -365,17 +329,14 @@ class Game:
         for header, x in headers:
             self.draw_text_with_shadow(header, x, header_y, self.font_md, COLOR_ACCENT_PRIMARY, center=True, shadow_offset=1)
         
-        # Divider
         pygame.draw.line(self.screen, COLOR_ACCENT_SECONDARY, 
                         (panel_x + 40, header_y + 40), 
                         (panel_x + panel_width - 40, header_y + 40), 2)
         
-        # Scores
         scores = self.leaderboard.get_top_scores()
         entry_y = header_y + 80
         
         for i, entry in enumerate(scores[:12]):
-            # Rank color
             if i == 0:
                 rank_color = COLOR_GOLD
             elif i == 1:
@@ -385,19 +346,16 @@ class Game:
             else:
                 rank_color = COLOR_TEXT_PRIMARY
             
-            # Highlight top 3
             if i < 3:
                 highlight = pygame.Surface((panel_width - 80, 50), pygame.SRCALPHA)
                 highlight.fill((*rank_color, 20))
                 self.screen.blit(highlight, (panel_x + 40, entry_y - 20))
             
-            # Data
             rank_text = f"#{i+1}"
             name = entry['name'][:20]
             score = str(entry['score'])
             date = entry.get('timestamp', 'N/A')[:10]
             
-            # Draw entry
             self.draw_text_with_shadow(rank_text, panel_x + 80, entry_y, self.font_lg, rank_color, shadow_offset=1)
             self.draw_text_with_shadow(name, panel_x + 350, entry_y, self.font_lg, COLOR_TEXT_PRIMARY, shadow_offset=1)
             self.draw_text_with_shadow(score, panel_x + 700, entry_y, self.font_lg, COLOR_ACCENT_PRIMARY if i < 3 else COLOR_TEXT_PRIMARY, shadow_offset=1)
@@ -405,13 +363,11 @@ class Game:
             
             entry_y += 55
         
-        # No scores
         if not scores:
             self.draw_text_with_shadow("NO SCORES YET - BE THE FIRST!", 
                                       SCREEN_WIDTH//2, SCREEN_HEIGHT//2, 
                                       self.font_xl, COLOR_ACCENT_PRIMARY)
         
-        # Instructions
         inst_y = SCREEN_HEIGHT - 120
         self.draw_glass_panel(SCREEN_WIDTH//2 - 400, inst_y, 800, 80, alpha=200)
         self.draw_text_with_shadow("ENTER: Next Player  │  Q: Quit", 
@@ -430,11 +386,9 @@ class Game:
         
         self.draw_glass_panel(x, y, panel_width, panel_height, alpha=230)
         
-        # Title
         self.draw_text_with_shadow("TOP PLAYERS", x + panel_width//2, y + 40, 
                                    self.font_md, COLOR_ACCENT_PRIMARY, shadow_offset=1)
         
-        # Entries
         entry_y = y + 80
         for i, entry in enumerate(scores):
             color = [COLOR_GOLD, COLOR_SILVER, COLOR_BRONZE][i] if i < 3 else COLOR_TEXT_PRIMARY
@@ -442,11 +396,9 @@ class Game:
             name = entry['name'][:12]
             score = str(entry['score'])
             
-            # Name
             name_surf = self.font_sm.render(f"{i+1}. {name}", True, color)
             self.screen.blit(name_surf, (x + 20, entry_y))
             
-            # Score
             score_surf = self.font_md.render(score, True, COLOR_ACCENT_PRIMARY)
             score_rect = score_surf.get_rect(right=x + panel_width - 20, centery=entry_y + 10)
             self.screen.blit(score_surf, score_rect)
@@ -459,26 +411,22 @@ class Game:
         
         self.draw_starfield()
         
-        # Game area border
         for i in range(5):
             alpha = 60 - i * 12
             pygame.draw.line(self.screen, (*COLOR_ACCENT_PRIMARY, alpha), 
                            (game_width + i, 0), (game_width + i, SCREEN_HEIGHT))
         
-        # Draw entities
         self.player.draw(self.screen)
         self.bullets.draw(self.screen)
         self.asteroids.draw(self.screen)
         self.explosions.draw(self.screen)
         
-        # HUD - Player & Score
         self.draw_glass_panel(20, 20, 300, 120)
         self.draw_text_with_shadow(f"👤 {self.current_player[:12]}", 30, 50, 
                                    self.font_md, COLOR_ACCENT_PRIMARY, center=False, shadow_offset=1)
         self.draw_text_with_shadow(f"SCORE: {self.score}", 30, 95, 
                                    self.font_lg, COLOR_GOLD, center=False, shadow_offset=2)
         
-        # Lives
         self.draw_glass_panel(20, 160, 300, 100)
         self.draw_text_with_shadow("LIVES", 30, 185, self.font_sm, COLOR_TEXT_SECONDARY, center=False)
         
@@ -489,7 +437,6 @@ class Game:
             pygame.draw.polygon(self.screen, COLOR_ACCENT_PRIMARY, points)
             pygame.draw.polygon(self.screen, COLOR_TEXT_PRIMARY, points, 1)
         
-        # Timer
         timer_width = 350
         timer_x = game_width//2 - timer_width//2
         self.draw_glass_panel(timer_x, 20, timer_width, 140)
@@ -507,7 +454,6 @@ class Game:
         self.draw_text_with_shadow(f"{time_remaining}s", game_width//2, 100, 
                                    self.font_xxl, time_color, shadow_offset=3)
         
-        # Progress bar
         bar_width = 300
         bar_x = game_width//2 - bar_width//2
         progress = max(0, self.time_left / 30.0)
@@ -521,10 +467,8 @@ class Game:
         
         self.draw_progress_bar(bar_x, 135, bar_width, 12, progress, bar_colors[0], bar_colors[1])
         
-        # Side leaderboard
         self.draw_mini_leaderboard(SCREEN_WIDTH - 380, 20)
         
-        # Stats
         stats_y = SCREEN_HEIGHT - 200
         self.draw_glass_panel(SCREEN_WIDTH - 380, stats_y, 360, 180)
         
@@ -554,7 +498,7 @@ class Game:
         self.explosions = ExplosionManager()
         self.asteroids.spawn_initial()
 
-    def run(self):
+    async def run(self):  # Made async
         while True:
             self.clock.tick(FPS)
             for event in pygame.event.get():
@@ -582,6 +526,8 @@ class Game:
                 self.game_over_screen()
             elif self.state == "LEADERBOARD":
                 self.leaderboard_screen()
+            
+            await asyncio.sleep(0)  # Critical for Pygbag!
 
     def handle_start_screen(self, event):
         if event.type == pygame.KEYDOWN:
@@ -681,6 +627,6 @@ class Game:
                 break
 
 
+# CRITICAL: Async entry point for Pygbag
 if __name__ == "__main__":
-    game = Game()
-    game.run()
+    asyncio.run(Game().run())
