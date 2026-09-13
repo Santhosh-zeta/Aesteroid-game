@@ -54,7 +54,8 @@ The game was designed and used as the centrepiece challenge at the **Artificial 
 ## 📸 Screenshots
 
 | Start Screen | Gameplay | Leaderboard |
-|---|---|---|
+|:---:|:---:|:---:|
+| ![Start Screen](assets/screenshots/start_screen.png) | ![Gameplay](assets/screenshots/gameplay.png) | ![Leaderboard](assets/screenshots/leaderboard.png) |
 | *Enter your name and launch* | *30 seconds. No mercy.* | *Hall of Fame* |
 
 ---
@@ -113,12 +114,16 @@ aesteroid-game/
 ├── game/
 │   └── settings.py      # Game constants and tuning values
 └── assets/
-    └── sounds/          # .wav sound effects
-        ├── shoot.wav
-        ├── hit.wav
-        ├── thrust.wav
-        ├── explosion.wav
-        └── game_over.wav
+    ├── sounds/              # .wav sound effects
+    │   ├── shoot.wav
+    │   ├── hit.wav
+    │   ├── thrust.wav
+    │   ├── explosion.wav
+    │   └── game_over.wav
+    └── screenshots/         # In-game screenshots
+        ├── start_screen.png
+        ├── gameplay.png
+        └── leaderboard.png
 ```
 
 ---

@@ -6,8 +6,9 @@ __pycache__/
 build/web/
 dist/
 *.egg-info/
-.env
 .venv
 venv/
 .DS_Store
 Thumbs.db
+config.bat
+node_modules
